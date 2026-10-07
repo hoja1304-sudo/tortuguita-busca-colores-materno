@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tortuguita busca colores Materno</title>
+<script>/* voz español neutro (seseo) */(function(){if(!window.SpeechSynthesisUtterance||window.__seseo)return;window.__seseo=1;function s(t){return t==null?t:(""+t).replace(/z/g,"s").replace(/Z/g,"S").replace(/c(?=[eiéíEIÉÍ])/g,"s").replace(/C(?=[eiéíEIÉÍ])/g,"S");}try{var p=SpeechSynthesisUtterance.prototype,d=Object.getOwnPropertyDescriptor(p,"text");if(d&&d.set&&d.get){Object.defineProperty(p,"text",{configurable:true,enumerable:d.enumerable,get:d.get,set:function(v){d.set.call(this,s(v));}});}}catch(e){}var O=window.SpeechSynthesisUtterance;function N(t){return arguments.length?new O(s(t)):new O();}N.prototype=O.prototype;try{window.SpeechSynthesisUtterance=N;}catch(e){}})();</script>
+<style>
+  :root{
+    --bg:#bfe9ff; --bg2:#e3f7d9; --card:#ffffff; --ink:#24324a; --soft:#5d6b82;
+    --main:#ff8a3d; --main2:#e86a1c; --ok:#2fb35a; --line:#d8e3ef;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:linear-gradient(180deg,var(--bg),var(--bg2));color:var(--ink);
+    font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;overflow:hidden;
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  button{font-family:inherit;cursor:pointer}
+  .hidden{display:none!important}
+
+  /* ---------- Inicio ---------- */
+  #inicio{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+  .card{background:var(--card);border-radius:28px;box-shadow:0 14px 40px rgba(30,60,90,.18);
+    padding:clamp(18px,4vw,36px);width:min(560px,100%);text-align:center;margin:auto}
+  .kicker{display:inline-block;background:#fff1e4;color:#c4520e;font-weight:700;border-radius:999px;
+    padding:6px 16px;font-size:clamp(14px,2.4vw,17px)}
+  h1{margin:10px 0 4px;font-size:clamp(28px,6.4vw,46px);line-height:1.1;color:#1f6b3d}
+  .sub{margin:6px 0 14px;color:var(--soft);font-size:clamp(15px,2.8vw,19px)}
+  #portadaTortuga{width:min(220px,48vw);height:auto;display:block;margin:4px auto 0}
+  .puntos{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:10px 0 18px}
+  .puntos span{width:clamp(24px,5vw,32px);height:clamp(24px,5vw,32px);border-radius:50%;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15)}
+  .btn{border:0;border-radius:999px;font-weight:800;min-height:56px;padding:12px 30px;
+    font-size:clamp(20px,4vw,26px);color:#fff;background:linear-gradient(180deg,var(--main),var(--main2));
+    box-shadow:0 6px 0 #b84f10,0 10px 20px rgba(0,0,0,.15);transition:transform .1s}
+  .btn:active{transform:translateY(3px);box-shadow:0 3px 0 #b84f10}
+  .btn:focus-visible,.ibtn:focus-visible{outline:4px solid #3a86ff;outline-offset:3px}
+  .btn.sec{background:#fff;color:var(--ink);box-shadow:0 5px 0 #c9d4e2,0 8px 16px rgba(0,0,0,.08);font-size:clamp(17px,3.2vw,20px);min-height:48px}
+  .fila{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .ayuda{margin:16px 0 0;color:var(--soft);font-size:clamp(14px,2.6vw,16px);line-height:1.45}
+  .autoria{margin:18px 0 0;font-size:13px;color:#8a95a6;line-height:1.4}
+  .autoria strong{color:#6f7c8f;font-weight:600}
+
+  /* ---------- Juego ---------- */
+  #juego{position:fixed;inset:0}
+  #tablero{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+  .barra{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;
+    padding:10px clamp(8px,2vw,16px);pointer-events:none}
+  .barra>*{pointer-events:auto}
+  .ibtn{width:52px;height:52px;flex:0 0 52px;border-radius:50%;border:0;background:#fff;font-size:24px;
+    box-shadow:0 4px 0 #c9d4e2,0 6px 14px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center}
+  .letrero{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:12px;
+    background:#fff;border-radius:999px;padding:6px 8px 6px 18px;box-shadow:0 4px 0 #c9d4e2,0 8px 18px rgba(0,0,0,.12);
+    max-width:560px;margin:0 auto}
+  .letrero .txt{display:flex;flex-direction:column;align-items:center;line-height:1.05;min-width:0}
+  .letrero .txt small{font-size:clamp(13px,2.4vw,17px);font-weight:700;color:var(--soft)}
+  .letrero .txt b{font-size:clamp(22px,4.6vw,32px);font-weight:900;text-transform:uppercase;letter-spacing:.5px}
+  .letrero .muestra{width:clamp(34px,6vw,46px);height:clamp(34px,6vw,46px);border-radius:50%;flex:0 0 auto;
+    border:3px solid rgba(0,0,0,.18)}
+  .letrero .ibtn{width:46px;height:46px;flex-basis:46px;box-shadow:none;background:#eef4fb;font-size:22px}
+  .progreso{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:8px;
+    background:rgba(255,255,255,.85);padding:8px 12px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+  .progreso span{width:22px;height:22px;border-radius:50%;background:#e3e9f1;border:2px solid #cfd8e3;transition:transform .3s}
+  .progreso span.hecho{transform:scale(1.15)}
+  .aviso{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.6);opacity:0;
+    font-size:clamp(70px,16vw,140px);pointer-events:none;transition:transform .35s,opacity .35s;filter:drop-shadow(0 6px 10px rgba(0,0,0,.25))}
+  .aviso.ver{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+  /* ---------- Final ---------- */
+  #final{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(36,50,74,.35);overflow-y:auto}
+  #final h2{font-size:clamp(30px,7vw,48px);margin:6px 0;color:#1f6b3d}
+  .estrellas{font-size:clamp(34px,8vw,54px);letter-spacing:4px}
+  @media (max-width:420px){ .letrero{padding-left:12px;gap:8px} .ibtn{width:46px;height:46px;flex-basis:46px} }
+</style>
+</head>
+<body>
+
+<!-- ============ INICIO ============ -->
+<section id="inicio" aria-labelledby="titulo">
+  <div class="card">
+    <span class="kicker">Educación Preescolar · Materno</span>
+    <canvas id="portadaTortuga" width="440" height="300" aria-hidden="true"></canvas>
+    <h1 id="titulo">Tortuguita busca colores</h1>
+    <p class="sub">Escucha el color y lleva a la tortuguita a la manzana de ese color.</p>
+    <div class="puntos" id="puntosInicio" aria-hidden="true"></div>
+    <div class="fila">
+      <button class="btn" id="btnJugar">▶ ¡A jugar!</button>
+    </div>
+    <p class="ayuda">Toca la pantalla o arrastra el dedo y la tortuguita camina hacia allí.<br>También se mueve con las flechas del teclado.</p>
+    <p class="autoria"><strong>Elaborado por: Alberto Jiménez Ruiz</strong><br>Asesor Regional de Matemática <span style="white-space:nowrap">DRE-Cartago-DAP-2026</span></p>
+  </div>
+</section>
+
+<!-- ============ JUEGO ============ -->
+<section id="juego" class="hidden" aria-label="Juego Tortuguita busca colores">
+  <canvas id="tablero" aria-label="Campo de juego con manzanas de colores"></canvas>
+  <div class="barra">
+    <button class="ibtn" id="btnCasa" aria-label="Volver al inicio" title="Volver al inicio">🏠</button>
+    <div class="letrero" role="status" aria-live="polite">
+      <span class="txt" id="txtColor"><small>Busca el color</small><b></b></span>
+      <span class="muestra" id="muestra"></span>
+      <button class="ibtn" id="btnRepetir" aria-label="Escuchar otra vez" title="Escuchar otra vez">🔊</button>
+    </div>
+    <button class="ibtn" id="btnVoz" aria-label="Silenciar voz" title="Voz activada">🗣️</button>
+  </div>
+  <div class="progreso" id="progreso" aria-hidden="true"></div>
+  <div class="aviso" id="aviso" aria-hidden="true">⭐</div>
+</section>
+
+<!-- ============ FINAL ============ -->
+<section id="final" class="hidden" aria-labelledby="tFinal">
+  <div class="card">
+    <div class="estrellas" aria-hidden="true">⭐⭐⭐</div>
+    <h2 id="tFinal">¡Muy bien!</h2>
+    <p class="sub">La tortuguita encontró todos los colores.</p>
+    <div class="puntos" id="puntosFinal" aria-hidden="true"></div>
+    <div class="fila">
+      <button class="btn" id="btnOtra">🔄 Jugar otra vez</button>
+      <button class="btn sec" id="btnInicio">🏠 Inicio</button>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  "use strict";
+  // ---------- Colores ----------
+  const COLORES=[
+    {n:"rojo",     t:"Rojo",     c:"#e53935", b:"#a31d1a"},
+    {n:"verde",    t:"Verde",    c:"#43b047", b:"#23772a"},
+    {n:"azul",     t:"Azul",     c:"#1e6fe0", b:"#0f449a"},
+    {n:"negro",    t:"Negro",    c:"#26272b", b:"#000000"},
+    {n:"amarillo", t:"Amarillo", c:"#ffd21f", b:"#c49a00"},
+    {n:"naranja",  t:"Naranja",  c:"#ff8c1a", b:"#c25e00"},
+    {n:"morado",   t:"Morado",   c:"#8e44c9", b:"#5c2389"},
+    {n:"blanco",   t:"Blanco",   c:"#ffffff", b:"#9aa7b8"}
+  ];
+  const POR_RONDA=6;                       // manzanas en pantalla en cada ronda
+
+  const $=s=>document.querySelector(s);
+  const cv=$("#tablero"), ctx=cv.getContext("2d");
+  let W=0,H=0,DPR=1;
+
+  // ---------- Voz (español latinoamericano) ----------
+  let vozOn=true, vozElegida=null;
+  try{ vozOn=localStorage.getItem("tortuguita_colores_voz")!=="0"; }catch(e){}
+  function elegirVoz(){
+    if(!("speechSynthesis" in window)) return;
+    const vs=speechSynthesis.getVoices().filter(v=>/^es/i.test(v.lang));
+    if(!vs.length) return;
+    const rank=v=>{ let p=0; const n=(v.name+" "+v.lang).toLowerCase();
+      if(/latino|latinoam|américa|america|méxico|mexico|colombia|costa rica/.test(n)) p+=6;
+      if(/es[-_](419|us|mx|co|cr|ar|cl|pe|ve)/i.test(v.lang)) p+=5;
+      if(/google/.test(n)) p+=2;
+      if(/es[-_]es/i.test(v.lang)) p-=6;
+      return p; };
+    vozElegida=vs.sort((a,b)=>rank(b)-rank(a))[0];
+  }
+  if("speechSynthesis" in window){ elegirVoz(); speechSynthesis.onvoiceschanged=elegirVoz; }
+  function decir(txt){
+    if(!vozOn||!("speechSynthesis" in window)) return;
+    try{
+      speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(txt);
+      if(vozElegida){ u.voice=vozElegida; u.lang=vozElegida.lang; } else u.lang="es-419";
+      u.rate=0.9; u.pitch=1.15;
+      speechSynthesis.speak(u);
+    }catch(e){}
+  }
+  function actualizarBtnVoz(){ const b=$("#btnVoz"); b.textContent=vozOn?"🗣️":"🔇";
+    b.setAttribute("aria-label",vozOn?"Silenciar voz":"Activar voz"); b.title=vozOn?"Voz activada":"Voz desactivada"; }
+
+  // ---------- Sonidos ----------
+  let AC=null;
+  function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==="suspended") AC.resume(); return AC; }
+  function tono(f,t0,dur,tipo,vol){ const a=ac(); if(!a) return; const o=a.createOscillator(), g=a.createGain();
+    o.type=tipo||"sine"; o.frequency.setValueAtTime(f,a.currentTime+t0);
+    g.gain.setValueAtTime(0.0001,a.currentTime+t0); g.gain.exponentialRampToValueAtTime(vol||0.25,a.currentTime+t0+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+t0+dur); o.connect(g); g.connect(a.destination);
+    o.start(a.currentTime+t0); o.stop(a.currentTime+t0+dur+0.05); }
+  function sonAcierto(){ [523,659,784,1047].forEach((f,i)=>tono(f,i*0.09,0.25,"triangle",0.22)); }
+  function sonError(){ const a=ac(); if(!a) return; const o=a.createOscillator(), g=a.createGain(); o.type="sine";
+    o.frequency.setValueAtTime(320,a.currentTime); o.frequency.exponentialRampToValueAtTime(140,a.currentTime+0.3);
+    g.gain.setValueAtTime(0.25,a.currentTime); g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.35);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+0.4); }
+  function sonFinal(){ [523,659,784,659,784,1047].forEach((f,i)=>tono(f,i*0.14,0.3,"triangle",0.22)); }
+
+  // ---------- Estado ----------
+  const turtle={x:0,y:0,r:30,ang:-Math.PI/2,anim:0};
+  const destino={x:0,y:0,activo:false};
+  const teclas={};
+  let frutas=[], orden=[], ronda=0, objetivo=null, estado="inicio", pausa=0, chispas=[];
+  let fr=30;       // radio de las manzanas
+
+  function mezclar(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+  function medir(){
+    DPR=Math.min(2,window.devicePixelRatio||1);
+    const oW=W, oH=H;
+    W=cv.clientWidth; H=cv.clientHeight;
+    cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0);
+    const m=Math.min(W,H);
+    turtle.r=Math.max(26,m*0.075); fr=Math.max(26,m*0.072);
+    if(oW>0&&oH>0){ turtle.x*=W/oW; turtle.y*=H/oH; destino.x*=W/oW; destino.y*=H/oH;
+      frutas.forEach(f=>{ f.x*=W/oW; f.y*=H/oH; }); }
+  }
+  // zona jugable (debajo de la barra superior y encima de la barra de progreso)
+  function zona(){ const top=Math.min(110,H*0.16)+fr, bot=H-Math.min(70,H*0.11)-fr*1.1, izq=fr*1.3, der=W-fr*1.3; return {top,bot,izq,der}; }
+
+  function nuevaRonda(){
+    objetivo=orden[ronda];
+    const otros=mezclar(COLORES.filter(c=>c!==objetivo)).slice(0,POR_RONDA-1);
+    const lista=mezclar([objetivo,...otros]);
+    const z=zona(); frutas=[];
+    for(const col of lista){
+      let x,y,ok=false,tries=0;
+      while(!ok&&tries<400){ tries++;
+        x=z.izq+Math.random()*(z.der-z.izq); y=z.top+Math.random()*(z.bot-z.top);
+        ok=Math.hypot(x-turtle.x,y-turtle.y)>turtle.r+fr*2.4 && frutas.every(f=>Math.hypot(f.x-x,f.y-y)>fr*2.9);
+      }
+      frutas.push({col,x,y,bob:Math.random()*6,comida:false,pop:0,temblor:0,espera:0});
+    }
+    $("#txtColor").innerHTML="<small>Busca el color</small><b>"+objetivo.n+"</b>";
+    const m=$("#muestra"); m.style.background=objetivo.c; m.style.borderColor=objetivo.b;
+    pausa=0; estado="jugando";
+    setTimeout(()=>decir("Tortuguita, busca el color: "+objetivo.n),250);
+  }
+
+  function pintarProgreso(){
+    $("#progreso").innerHTML=orden.map((c,i)=>`<span class="${i<ronda?"hecho":""}" style="${i<ronda?`background:${c.c};border-color:${c.b}`:""}"></span>`).join("");
+  }
+  function pintarPuntos(sel){ $(sel).innerHTML=COLORES.map(c=>`<span style="background:${c.c};border:2px solid ${c.b}"></span>`).join(""); }
+
+  function empezar(){
+    ac();
+    $("#inicio").classList.add("hidden"); $("#final").classList.add("hidden"); $("#juego").classList.remove("hidden");
+    medir();
+    turtle.x=W/2; turtle.y=H*0.62; turtle.ang=-Math.PI/2; destino.activo=false; chispas=[];
+    orden=mezclar(COLORES.slice()); ronda=0;
+    pintarProgreso(); nuevaRonda();
+  }
+  function aInicio(){
+    estado="inicio"; try{ speechSynthesis.cancel(); }catch(e){}
+    $("#juego").classList.add("hidden"); $("#final").classList.add("hidden"); $("#inicio").classList.remove("hidden");
+  }
+  function terminar(){
+    estado="fin"; sonFinal(); decir("¡Muy bien! Encontraste todos los colores.");
+    pintarPuntos("#puntosFinal");
+    setTimeout(()=>{ $("#final").classList.remove("hidden"); $("#btnOtra").focus(); },900);
+  }
+  function aviso(txt){ const a=$("#aviso"); a.textContent=txt; a.classList.add("ver"); clearTimeout(aviso.t); aviso.t=setTimeout(()=>a.classList.remove("ver"),900); }
+
+  function acierto(f){
+    f.comida=true; f.pop=320; sonAcierto(); aviso("⭐");
+    for(let i=0;i<22;i++){ const a=Math.random()*6.283, v=2+Math.random()*4;
+      chispas.push({x:f.x,y:f.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,v:1,c:i%3?f.col.c:"#ffd21f"}); }
+    decir(["¡Muy bien!","¡Excelente!","¡Lo encontraste!"][Math.floor(Math.random()*3)]+" Es el color "+f.col.n+".");
+    ronda++; pintarProgreso(); estado="pausa";
+    setTimeout(()=>{ if(estado!=="pausa") return; if(ronda>=orden.length) terminar(); else nuevaRonda(); },1900);
+  }
+  function fallo(f){
+    f.temblor=420; f.espera=1600; sonError();
+    const a=Math.atan2(turtle.y-f.y,turtle.x-f.x); turtle.x+=Math.cos(a)*turtle.r*0.9; turtle.y+=Math.sin(a)*turtle.r*0.9;
+    destino.activo=false;
+    decir("Ese es el color "+f.col.n+". Busca el color "+objetivo.n+".");
+  }
+
+  // ---------- Bucle ----------
+  let ult=performance.now();
+  function paso(ahora){
+    const dt=Math.min(50,ahora-ult); ult=ahora;
+    actualizar(dt); dibujar(); requestAnimationFrame(paso);
+  }
+  function actualizar(dt){
+    if(estado==="inicio"){ return; }
+    frutas.forEach(f=>{ f.bob+=dt*0.003; if(f.pop>0) f.pop-=dt; if(f.temblor>0) f.temblor-=dt; if(f.espera>0) f.espera-=dt; });
+    chispas.forEach(p=>{ p.x+=p.vx*dt/16; p.y+=p.vy*dt/16; p.vy+=0.12*dt/16; p.v-=dt/900; }); chispas=chispas.filter(p=>p.v>0);
+    if(estado!=="jugando"){ turtle.anim+=dt*0.004; return; }
+
+    // dirección: teclado o punto tocado
+    let dx=0,dy=0;
+    const kx=(teclas.ArrowRight?1:0)-(teclas.ArrowLeft?1:0), ky=(teclas.ArrowDown?1:0)-(teclas.ArrowUp?1:0);
+    const vmax=Math.min(W,H)*0.0065*(dt/16.67)+0.6;
+    if(kx||ky){ destino.activo=false; const l=Math.hypot(kx,ky); dx=kx/l*vmax; dy=ky/l*vmax; }
+    else if(destino.activo){ const ex=destino.x-turtle.x, ey=destino.y-turtle.y, d=Math.hypot(ex,ey);
+      if(d<4){ destino.activo=false; } else { const v=Math.min(vmax,d*0.2); dx=ex/d*v; dy=ey/d*v; } }
+    const mv=Math.hypot(dx,dy);
+    if(mv>0.05){
+      turtle.x+=dx; turtle.y+=dy;
+      const ta=Math.atan2(dy,dx); let da=ta-turtle.ang; while(da>Math.PI)da-=6.283185; while(da<-Math.PI)da+=6.283185; turtle.ang+=da*0.2;
+      turtle.anim+=dt*0.02;
+    } else turtle.anim+=dt*0.004;
+    const z=zona();
+    turtle.x=Math.max(turtle.r,Math.min(W-turtle.r,turtle.x));
+    turtle.y=Math.max(z.top-fr*0.6,Math.min(H-turtle.r*0.9,turtle.y));
+
+    for(const f of frutas){
+      if(f.comida||f.espera>0) continue;
+      if(Math.hypot(f.x-turtle.x,f.y-turtle.y)<turtle.r*0.9+fr*0.75){
+        if(f.col===objetivo){ acierto(f); break; }
+        // una manzana de otro color solo cuenta si el niño la eligió (tocó sobre ella o guía con flechas);
+        // si solo pasa por encima camino a otra, la tortuga sigue sin castigo
+        const laEligio=!destino.activo || Math.hypot(destino.x-f.x,destino.y-f.y)<fr*1.7;
+        if(laEligio){ fallo(f); break; }
+      }
+    }
+  }
+
+  // ---------- Dibujo ----------
+  function campo(){
+    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,"#bfe9ff"); g.addColorStop(0.25,"#d9f2c9"); g.addColorStop(1,"#a9dd8a");
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    // hierba suave
+    ctx.save(); ctx.globalAlpha=0.22; ctx.strokeStyle="#4e9a3c"; ctx.lineWidth=2; ctx.lineCap="round";
+    const paso=Math.max(40,Math.min(W,H)*0.09);
+    for(let y=H*0.22;y<H;y+=paso*0.8){ for(let x=((y/paso)%2)*paso*0.5;x<W;x+=paso){
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-4,y-9); ctx.moveTo(x+5,y); ctx.lineTo(x+7,y-11); ctx.stroke(); } }
+    ctx.restore();
+    // flores pequeñas
+    ctx.save(); const fl=[[.08,.3],[.92,.34],[.15,.88],[.85,.9],[.5,.27],[.04,.6],[.96,.66]];
+    fl.forEach((p,i)=>{ const x=p[0]*W, y=p[1]*H, s=Math.max(5,Math.min(W,H)*0.012);
+      ctx.fillStyle=["#ffffff","#ffe066","#ff9ec7"][i%3]; for(let k=0;k<5;k++){ const a=k/5*6.283; ctx.beginPath(); ctx.arc(x+Math.cos(a)*s,y+Math.sin(a)*s,s*0.75,0,6.283); ctx.fill(); }
+      ctx.fillStyle="#f4a62a"; ctx.beginPath(); ctx.arc(x,y,s*0.6,0,6.283); ctx.fill(); });
+    ctx.restore();
+  }
+  function manzana(c,x,y,r,col){
+    // sombra
+    c.fillStyle="rgba(0,0,0,.15)"; c.beginPath(); c.ellipse(x,y+r*0.95,r*0.8,r*0.2,0,0,6.283); c.fill();
+    // tallo y hoja
+    c.strokeStyle="#5a3b1a"; c.lineWidth=Math.max(2,r*0.1); c.lineCap="round"; c.beginPath(); c.moveTo(x,y-r*0.8); c.lineTo(x+r*0.06,y-r*1.18); c.stroke();
+    c.fillStyle="#3ddc84"; c.beginPath(); c.ellipse(x+r*0.3,y-r*1.04,r*0.3,r*0.15,-0.7,0,6.283); c.fill();
+    // fruta
+    c.fillStyle=col.c; c.beginPath(); c.arc(x,y,r,0,6.283); c.fill();
+    c.strokeStyle=col.b; c.lineWidth=Math.max(2.5,r*0.09); c.stroke();
+    c.fillStyle=col.n==="blanco"?"rgba(180,200,220,.45)":"rgba(255,255,255,.42)";
+    c.beginPath(); c.ellipse(x-r*0.34,y-r*0.34,r*0.24,r*0.14,-0.6,0,6.283); c.fill();
+  }
+  function dibujarFrutas(){
+    for(const f of frutas){
+      if(f.comida&&f.pop<=0) continue;
+      let x=f.x, y=f.y+Math.sin(f.bob)*fr*0.06, r=fr;
+      if(f.temblor>0) x+=Math.sin(f.temblor*0.08)*fr*0.18;
+      ctx.save();
+      if(f.comida){ const k=f.pop/320; ctx.globalAlpha=Math.max(0,k); r=fr*(1+(1-k)*0.7); }
+      manzana(ctx,x,y,r,f.col);
+      ctx.restore();
+    }
+  }
+  // Tortuga vista desde arriba (misma de «Tablas de multiplicar con tortuga»)
+  function tortuga(c,x,y,r,ang,anim){
+    c.save(); c.translate(x,y); c.rotate(ang);
+    const paso=Math.sin(anim*2)*r*0.12;
+    c.fillStyle="#2e9e4f";
+    [[0.55,0.6],[0.55,-0.6],[-0.55,0.62],[-0.55,-0.62]].forEach((p,i)=>{ const off=(i%2===0?paso:-paso);
+      c.save(); c.translate(p[0]*r,p[1]*r+off); c.rotate(p[1]>0?0.5:-0.5); c.beginPath(); c.ellipse(0,0,r*0.2,r*0.13,0,0,6.283); c.fill(); c.restore(); });
+    c.beginPath(); c.moveTo(-r*0.85,0); c.lineTo(-r*1.12,-r*0.1); c.lineTo(-r*1.12,r*0.1); c.closePath(); c.fill();
+    c.fillStyle="#39b55e"; c.beginPath(); c.ellipse(r*0.98,0,r*0.34,r*0.28,0,0,6.283); c.fill();
+    c.fillStyle="#12233a"; c.beginPath(); c.arc(r*1.12,-r*0.13,r*0.06,0,6.283); c.fill(); c.beginPath(); c.arc(r*1.12,r*0.13,r*0.06,0,6.283); c.fill();
+    c.beginPath(); c.ellipse(0,0,r*0.9,r*0.82,0,0,6.283); c.fillStyle="#c76a1e"; c.fill();
+    c.strokeStyle="#8a4712"; c.lineWidth=Math.max(2,r*0.09); c.stroke();
+    c.fillStyle="#e08a2e";
+    c.beginPath(); for(let i=0;i<6;i++){ const a=i/6*6.283185+0.52; const px=Math.cos(a)*r*0.34, py=Math.sin(a)*r*0.30; i?c.lineTo(px,py):c.moveTo(px,py);} c.closePath(); c.fill();
+    c.strokeStyle="#8a4712"; c.lineWidth=Math.max(1.5,r*0.05); c.stroke();
+    for(let i=0;i<6;i++){ const a=i/6*6.283185+0.52; c.beginPath(); c.moveTo(Math.cos(a)*r*0.34,Math.sin(a)*r*0.30); c.lineTo(Math.cos(a)*r*0.9,Math.sin(a)*r*0.82); c.stroke(); }
+    c.restore();
+  }
+  function dibujar(){
+    if(estado==="inicio") return;
+    campo();
+    if(destino.activo&&estado==="jugando"){ ctx.save(); ctx.strokeStyle="rgba(255,255,255,.9)"; ctx.lineWidth=3; ctx.setLineDash([6,6]);
+      ctx.beginPath(); ctx.arc(destino.x,destino.y,12,0,6.283); ctx.stroke(); ctx.restore(); }
+    dibujarFrutas();
+    tortuga(ctx,turtle.x,turtle.y,turtle.r,turtle.ang,turtle.anim);
+    chispas.forEach(p=>{ ctx.globalAlpha=Math.max(0,p.v); ctx.fillStyle=p.c; ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(3,fr*0.12),0,6.283); ctx.fill(); });
+    ctx.globalAlpha=1;
+  }
+
+  // ---------- Portada ----------
+  function portada(){
+    const c=$("#portadaTortuga").getContext("2d"); c.clearRect(0,0,440,300);
+    [["rojo",80,90],["azul",360,80],["amarillo",70,225],["morado",370,220],["verde",215,60]].forEach(p=>manzana(c,p[1],p[2],34,COLORES.find(k=>k.n===p[0])));
+    tortuga(c,215,185,70,-Math.PI/2,0.6);
+  }
+
+  // ---------- Entradas ----------
+  function puntoDesde(e){ const r=cv.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
+  let arrastrando=false;
+  cv.addEventListener("pointerdown",e=>{ if(estado!=="jugando") return; ac(); arrastrando=true; try{cv.setPointerCapture(e.pointerId);}catch(_){}
+    const p=puntoDesde(e); destino.x=p.x; destino.y=p.y; destino.activo=true; });
+  cv.addEventListener("pointermove",e=>{ if(!arrastrando||estado!=="jugando") return; const p=puntoDesde(e); destino.x=p.x; destino.y=p.y; destino.activo=true; });
+  ["pointerup","pointercancel"].forEach(t=>cv.addEventListener(t,()=>{ arrastrando=false; }));
+  window.addEventListener("keydown",e=>{
+    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)){ if(estado==="jugando"){ teclas[e.key]=true; e.preventDefault(); } }
+  });
+  window.addEventListener("keyup",e=>{ teclas[e.key]=false; });
+  window.addEventListener("blur",()=>{ for(const k in teclas) teclas[k]=false; });
+  window.addEventListener("resize",()=>{ if(!$("#juego").classList.contains("hidden")) medir(); });
+
+  $("#btnJugar").addEventListener("click",empezar);
+  $("#btnOtra").addEventListener("click",empezar);
+  $("#btnInicio").addEventListener("click",aInicio);
+  $("#btnCasa").addEventListener("click",aInicio);
+  $("#btnRepetir").addEventListener("click",()=>{ if(objetivo) decir("Tortuguita, busca el color: "+objetivo.n); });
+  $("#btnVoz").addEventListener("click",()=>{ vozOn=!vozOn; try{ localStorage.setItem("tortuguita_colores_voz",vozOn?"1":"0"); }catch(e){}
+    actualizarBtnVoz(); if(!vozOn){ try{ speechSynthesis.cancel(); }catch(e){} } else if(objetivo) decir("Tortuguita, busca el color: "+objetivo.n); });
+
+  if(location.hash==="#prueba") window.__tg={frutas:()=>frutas,objetivo:()=>objetivo,estado:()=>estado,ronda:()=>ronda,tortuga:()=>turtle};
+  pintarPuntos("#puntosInicio"); portada(); actualizarBtnVoz();
+  requestAnimationFrame(paso);
+})();
+</script>
+</body>
+</html>
