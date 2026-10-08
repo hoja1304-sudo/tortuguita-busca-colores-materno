@@ -286,8 +286,9 @@
     lanzarFuegos(f.col.c);
     ronda++; pintarProgreso(); estado="pausa"; destino.activo=false;
     // se pasa al siguiente color solo cuando terminan los fuegos (mín. 2,8 s) Y la voz dijo «¡Muy bien!» completo
-    let listos=0; const seguir=()=>{ if(++listos<2||id!==juegoId||estado!=="pausa") return;
-      if(ronda>=orden.length) terminar(); else nuevaRonda(); };
+    let listos=0; const seguir=()=>{ if(++listos<2) return; (function espera(){ if(id!==juegoId||estado!=="pausa") return;
+      if(cohetes.length||celebra>0) return setTimeout(espera,100);       // que terminen por completo los fuegos
+      if(ronda>=orden.length) terminar(); else nuevaRonda(); })(); };
     setTimeout(seguir,2800);
     setTimeout(()=>decir("¡Muy bien!",()=>setTimeout(seguir,300)),350);
   }
