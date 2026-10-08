@@ -294,7 +294,9 @@
   }
   function fallo(f){
     f.temblor=420; f.espera=1600; sonError();
-    const a=Math.atan2(turtle.y-f.y,turtle.x-f.x); turtle.x+=Math.cos(a)*turtle.r*0.9; turtle.y+=Math.sin(a)*turtle.r*0.9;
+    // retrocede hasta quedar fuera del alcance de esa manzana
+    const a=Math.atan2(turtle.y-f.y,turtle.x-f.x), lejos=fr+turtle.r*1.45;
+    turtle.x=f.x+Math.cos(a)*lejos; turtle.y=f.y+Math.sin(a)*lejos;
     destino.activo=false;
     decir("Ese es el color "+f.col.n+". Busca el color "+objetivo.n+".");
   }
@@ -337,9 +339,14 @@
     turtle.x=Math.max(turtle.r,Math.min(W-turtle.r,turtle.x));
     turtle.y=Math.max(z.top-fr*0.6,Math.min(H-turtle.r*0.9,turtle.y));
 
+    // la cabeza va al frente de la tortuga (mismo punto que en el dibujo); basta con que la cabeza
+    // o el borde del caparazón toquen el borde de la manzana para que cuente
+    const cabX=turtle.x+Math.cos(turtle.ang)*turtle.r*0.98, cabY=turtle.y+Math.sin(turtle.ang)*turtle.r*0.98;
     for(const f of frutas){
       if(f.comida||f.espera>0) continue;
-      if(Math.hypot(f.x-turtle.x,f.y-turtle.y)<turtle.r*0.9+fr*0.75){
+      const tocaCabeza=Math.hypot(f.x-cabX,f.y-cabY)<fr+turtle.r*0.32;
+      const tocaCuerpo=Math.hypot(f.x-turtle.x,f.y-turtle.y)<fr+turtle.r*0.82;
+      if(tocaCabeza||tocaCuerpo){
         if(f.col===objetivo){ acierto(f); break; }
         // una manzana de otro color solo cuenta si el niño la eligió (tocó sobre ella o guía con flechas);
         // si solo pasa por encima camino a otra, la tortuga sigue sin castigo
