@@ -62,7 +62,9 @@
   .progreso span{width:22px;height:22px;border-radius:50%;background:#e3e9f1;border:2px solid #cfd8e3;transition:transform .3s}
   .progreso span.hecho{transform:scale(1.15)}
   .aviso{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.6);opacity:0;
-    font-size:clamp(70px,16vw,140px);pointer-events:none;transition:transform .35s,opacity .35s;filter:drop-shadow(0 6px 10px rgba(0,0,0,.25))}
+    font-size:clamp(44px,12vw,104px);font-weight:900;white-space:nowrap;color:#ffd21f;
+    -webkit-text-stroke:3px #c4520e;paint-order:stroke fill;
+    pointer-events:none;transition:transform .35s,opacity .35s;filter:drop-shadow(0 6px 10px rgba(0,0,0,.25))}
   .aviso.ver{opacity:1;transform:translate(-50%,-50%) scale(1)}
 
   /* ---------- Final ---------- */
@@ -156,15 +158,19 @@
     vozElegida=vs.sort((a,b)=>rank(b)-rank(a))[0];
   }
   if("speechSynthesis" in window){ elegirVoz(); speechSynthesis.onvoiceschanged=elegirVoz; }
-  function decir(txt){
-    if(!vozOn||!("speechSynthesis" in window)) return;
+  // alFinal: se llama una sola vez cuando la voz termina (o de inmediato si no hay voz)
+  function decir(txt,alFinal){
+    let hecho=false; const fin=()=>{ if(hecho) return; hecho=true; if(alFinal) alFinal(); };
+    if(!vozOn||!("speechSynthesis" in window)){ fin(); return; }
     try{
       speechSynthesis.cancel();
       const u=new SpeechSynthesisUtterance(txt);
       if(vozElegida){ u.voice=vozElegida; u.lang=vozElegida.lang; } else u.lang="es-419";
       u.rate=0.9; u.pitch=1.15;
+      u.onend=fin; u.onerror=fin;
       speechSynthesis.speak(u);
-    }catch(e){}
+      setTimeout(fin,4500);          // respaldo por si el navegador no avisa el final
+    }catch(e){ fin(); }
   }
   function actualizarBtnVoz(){ const b=$("#btnVoz"); b.textContent=vozOn?"🗣️":"🔇";
     b.setAttribute("aria-label",vozOn?"Silenciar voz":"Activar voz"); b.title=vozOn?"Voz activada":"Voz desactivada"; }
@@ -182,6 +188,10 @@
     o.frequency.setValueAtTime(320,a.currentTime); o.frequency.exponentialRampToValueAtTime(140,a.currentTime+0.3);
     g.gain.setValueAtTime(0.25,a.currentTime); g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.35);
     o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+0.4); }
+  function sonEstallido(){ const a=ac(); if(!a) return; const n=Math.floor(a.sampleRate*0.35), buf=a.createBuffer(1,n,a.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
+    const s=a.createBufferSource(), f=a.createBiquadFilter(), g=a.createGain(); s.buffer=buf; f.type="lowpass"; f.frequency.value=1800+Math.random()*1500; g.gain.value=0.35;
+    s.connect(f); f.connect(g); g.connect(a.destination); s.start(); }
   function sonFinal(){ [523,659,784,659,784,1047].forEach((f,i)=>tono(f,i*0.14,0.3,"triangle",0.22)); }
 
   // ---------- Estado ----------
@@ -234,28 +244,52 @@
     ac();
     $("#inicio").classList.add("hidden"); $("#final").classList.add("hidden"); $("#juego").classList.remove("hidden");
     medir();
-    turtle.x=W/2; turtle.y=H*0.62; turtle.ang=-Math.PI/2; destino.activo=false; chispas=[];
+    juegoId++; turtle.x=W/2; turtle.y=H*0.62; turtle.ang=-Math.PI/2; destino.activo=false; chispas=[]; cohetes=[]; celebra=0;
     orden=mezclar(COLORES.slice()); ronda=0;
     pintarProgreso(); nuevaRonda();
   }
   function aInicio(){
-    estado="inicio"; try{ speechSynthesis.cancel(); }catch(e){}
+    estado="inicio"; juegoId++; cohetes=[]; chispas=[]; try{ speechSynthesis.cancel(); }catch(e){}
     $("#juego").classList.add("hidden"); $("#final").classList.add("hidden"); $("#inicio").classList.remove("hidden");
   }
   function terminar(){
-    estado="fin"; sonFinal(); decir("¡Muy bien! Encontraste todos los colores.");
+    estado="fin"; sonFinal(); lanzarFuegos("#ffd21f"); decir("¡Muy bien! Encontraste todos los colores.");
     pintarPuntos("#puntosFinal");
     setTimeout(()=>{ $("#final").classList.remove("hidden"); $("#btnOtra").focus(); },900);
   }
-  function aviso(txt){ const a=$("#aviso"); a.textContent=txt; a.classList.add("ver"); clearTimeout(aviso.t); aviso.t=setTimeout(()=>a.classList.remove("ver"),900); }
+  function aviso(txt){ const a=$("#aviso"); a.textContent=txt; a.classList.add("ver"); clearTimeout(aviso.t); aviso.t=setTimeout(()=>a.classList.remove("ver"),2200); }
+
+  // fuegos artificiales: cohetes que suben desde abajo y estallan en chispas de colores
+  const FUEGO_COL=["#ff4d6d","#ffd21f","#43b047","#1e6fe0","#ff8c1a","#8e44c9","#ffffff","#2ee6d6"];
+  let cohetes=[], juegoId=0, celebra=0; const CELEBRA_MS=3000;
+  function lanzarFuegos(colPrincipal){
+    celebra=CELEBRA_MS;
+    const n=6;
+    for(let i=0;i<n;i++){
+      const x=W*(0.15+0.7*(i/(n-1)))+(Math.random()-0.5)*W*0.08;
+      cohetes.push({x,y:H+10,vy:-(H*0.018+Math.random()*H*0.006),meta:H*(0.16+Math.random()*0.3),
+        retraso:i*260+Math.random()*120,c:i%2?colPrincipal:FUEGO_COL[Math.floor(Math.random()*FUEGO_COL.length)]});
+    }
+  }
+  function estallar(k){
+    sonEstallido();
+    const m=60, vel=Math.min(W,H)*0.009;
+    for(let i=0;i<m;i++){ const a=i/m*6.283+Math.random()*0.1, v=vel*(0.55+Math.random()*0.6);
+      chispas.push({x:k.x,y:k.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,v:1.25,c:i%4===0?"#fff6c2":k.c,fuego:true}); }
+  }
 
   function acierto(f){
-    f.comida=true; f.pop=320; sonAcierto(); aviso("⭐");
+    const id=juegoId;
+    f.comida=true; f.pop=320; sonAcierto(); aviso("¡Muy bien!");
     for(let i=0;i<22;i++){ const a=Math.random()*6.283, v=2+Math.random()*4;
       chispas.push({x:f.x,y:f.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,v:1,c:i%3?f.col.c:"#ffd21f"}); }
-    decir(["¡Muy bien!","¡Excelente!","¡Lo encontraste!"][Math.floor(Math.random()*3)]+" Es el color "+f.col.n+".");
-    ronda++; pintarProgreso(); estado="pausa";
-    setTimeout(()=>{ if(estado!=="pausa") return; if(ronda>=orden.length) terminar(); else nuevaRonda(); },1900);
+    lanzarFuegos(f.col.c);
+    ronda++; pintarProgreso(); estado="pausa"; destino.activo=false;
+    // se pasa al siguiente color solo cuando terminan los fuegos (mín. 2,8 s) Y la voz dijo «¡Muy bien!» completo
+    let listos=0; const seguir=()=>{ if(++listos<2||id!==juegoId||estado!=="pausa") return;
+      if(ronda>=orden.length) terminar(); else nuevaRonda(); };
+    setTimeout(seguir,2800);
+    setTimeout(()=>decir("¡Muy bien!",()=>setTimeout(seguir,300)),350);
   }
   function fallo(f){
     f.temblor=420; f.espera=1600; sonError();
@@ -273,7 +307,16 @@
   function actualizar(dt){
     if(estado==="inicio"){ return; }
     frutas.forEach(f=>{ f.bob+=dt*0.003; if(f.pop>0) f.pop-=dt; if(f.temblor>0) f.temblor-=dt; if(f.espera>0) f.espera-=dt; });
-    chispas.forEach(p=>{ p.x+=p.vx*dt/16; p.y+=p.vy*dt/16; p.vy+=0.12*dt/16; p.v-=dt/900; }); chispas=chispas.filter(p=>p.v>0);
+    if(celebra>0) celebra=Math.max(0,celebra-dt);
+    for(const k of cohetes){
+      if(k.retraso>0){ k.retraso-=dt; continue; }
+      k.y+=k.vy*dt/16.67; k.vy*=0.992;
+      if(k.y<=k.meta){ k.listo=true; estallar(k); }
+    }
+    cohetes=cohetes.filter(k=>!k.listo);
+    chispas.forEach(p=>{ const fz=p.fuego?0.985:1; p.vx*=fz; p.vy*=fz;
+      p.x+=p.vx*dt/16; p.y+=p.vy*dt/16; p.vy+=(p.fuego?0.05:0.12)*dt/16; p.v-=dt/(p.fuego?1300:900); });
+    chispas=chispas.filter(p=>p.v>0);
     if(estado!=="jugando"){ turtle.anim+=dt*0.004; return; }
 
     // dirección: teclado o punto tocado
@@ -370,7 +413,16 @@
       ctx.beginPath(); ctx.arc(destino.x,destino.y,12,0,6.283); ctx.stroke(); ctx.restore(); }
     dibujarFrutas();
     tortuga(ctx,turtle.x,turtle.y,turtle.r,turtle.ang,turtle.anim);
-    chispas.forEach(p=>{ ctx.globalAlpha=Math.max(0,p.v); ctx.fillStyle=p.c; ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(3,fr*0.12),0,6.283); ctx.fill(); });
+    // cielo más oscuro mientras hay fuegos, para que luzcan
+    if(celebra>0){ const k=Math.min(1,celebra/600,(CELEBRA_MS-celebra)/300);
+      ctx.fillStyle="rgba(12,24,58,"+(0.42*k)+")"; ctx.fillRect(0,0,W,H); }
+    // cohetes subiendo (con estela)
+    for(const k of cohetes){ if(k.retraso>0) continue;
+      const g=ctx.createLinearGradient(k.x,k.y,k.x,k.y+H*0.08); g.addColorStop(0,"rgba(255,240,180,.95)"); g.addColorStop(1,"rgba(255,240,180,0)");
+      ctx.strokeStyle=g; ctx.lineWidth=Math.max(3,fr*0.12); ctx.lineCap="round"; ctx.beginPath(); ctx.moveTo(k.x,k.y); ctx.lineTo(k.x,k.y+H*0.08); ctx.stroke();
+      ctx.fillStyle=k.c; ctx.beginPath(); ctx.arc(k.x,k.y,Math.max(4,fr*0.14),0,6.283); ctx.fill(); }
+    chispas.forEach(p=>{ ctx.globalAlpha=Math.max(0,Math.min(1,p.v)); ctx.fillStyle=p.c; ctx.beginPath();
+      ctx.arc(p.x,p.y,p.fuego?Math.max(2.5,fr*0.085):Math.max(3,fr*0.12),0,6.283); ctx.fill(); });
     ctx.globalAlpha=1;
   }
 
