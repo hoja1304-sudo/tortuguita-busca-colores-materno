@@ -280,7 +280,7 @@
 
   function acierto(f){
     const id=juegoId;
-    f.comida=true; f.pop=320; sonAcierto(); aviso("¡Muy bien!");
+    f.comida=true; f.pop=320; sonAcierto();   // sin texto: los niños aún no leen; la felicitación es por voz
     for(let i=0;i<22;i++){ const a=Math.random()*6.283, v=2+Math.random()*4;
       chispas.push({x:f.x,y:f.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,v:1,c:i%3?f.col.c:"#ffd21f"}); }
     lanzarFuegos(f.col.c);
