@@ -153,10 +153,13 @@
     {n:"naranja",pl:"naranjas",art:"la",artPl:"las",c:"#ff8c1a",b:"#c25e00",k:"naranja",esc:0.78}
   ];
   FRUTAS.forEach(f=>{ const d=FOTOS_FRUTAS[f.k]; f.src=d.src; f.ar=d.ar; f.img=new Image(); f.img.src=d.src; });
-  let modo="colores", nivelFrutas=1, faltan=0;
+  let modo="colores", nivelFrutas=1, nivelColores=1, faltan=0;
+  const nivel=()=>modo==="frutas"?nivelFrutas:nivelColores;
+  // colores: nivel 2 = 4 colores × 2 manzanas; nivel 3 = 3 colores × 3 manzanas (se mueven despacio)
+  const COLORES_EN_PANTALLA={2:4,3:3}, RONDAS_COLORES_ALTO=6;
   // nivel 1: una fruta de cada una («busca la manzana»); nivel 2: dos de cada una («busca las manzanas»)
   function frase(o){
-    if(modo!=="frutas") return "Tortuguita, busca el color: "+o.n;
+    if(modo!=="frutas") return nivelColores>1 ? `Tortuguita, busca todas las de color ${o.n}.` : "Tortuguita, busca el color: "+o.n;
     return nivelFrutas===2 ? `Tortuguita, busca ${o.artPl} ${o.pl}.` : `Tortuguita, busca ${o.art} ${o.n}.`;
   }
   const escala=o=>o&&o.esc||1;
@@ -246,8 +249,13 @@
       lista=mezclar(nivelFrutas===2?[...FRUTAS,...FRUTAS]:FRUTAS.slice());
       faltan=nivelFrutas===2?2:1;
     } else {
-      const otros=mezclar(COLORES.filter(c=>c!==objetivo)).slice(0,POR_RONDA-1);
-      lista=mezclar([objetivo,...otros]);
+      if(nivelColores>1){
+        const k=nivelColores, otros=mezclar(COLORES.filter(c=>c!==objetivo)).slice(0,COLORES_EN_PANTALLA[k]-1), base=[objetivo,...otros];
+        lista=mezclar(Array.from({length:k},()=>base).flat()); faltan=k;
+      } else {
+        const otros=mezclar(COLORES.filter(c=>c!==objetivo)).slice(0,POR_RONDA-1);
+        lista=mezclar([objetivo,...otros]); faltan=1;
+      }
     }
     const z=zona(); frutas=[];
     for(const col of lista){
@@ -257,7 +265,7 @@
         ok=Math.hypot(x-turtle.x,y-turtle.y)>turtle.r+fr*2.4*escala(col) && frutas.every(f=>Math.hypot(f.x-x,f.y-y)>fr*2.9*(escala(col)+escala(f.col))/2);
       }
       // en «Busca frutas» las frutas se pasean despacio por el campo
-      const ang=Math.random()*6.283, vel=modo==="frutas"?Math.min(W,H)*(0.000045+Math.random()*0.00003):0;
+      const ang=Math.random()*6.283, vel=(modo==="frutas"||nivelColores>1)?Math.min(W,H)*(0.000045+Math.random()*0.00003):0;
       frutas.push({col,x,y,bob:Math.random()*6,comida:false,pop:0,temblor:0,espera:0,vx:Math.cos(ang)*vel,vy:Math.sin(ang)*vel});
     }
     const m=$("#muestra");
@@ -265,7 +273,7 @@
       $("#txtColor").innerHTML="<small>Busca</small><b>"+(nivelFrutas===2?objetivo.pl:objetivo.n)+"</b>";
       m.classList.add("foto"); m.style.backgroundImage=`url("${objetivo.src}")`;
     } else {
-      $("#txtColor").innerHTML="<small>Busca el color</small><b>"+objetivo.n+"</b>";
+      $("#txtColor").innerHTML="<small>"+(nivelColores>1?"Busca todas las de color":"Busca el color")+"</small><b>"+objetivo.n+"</b>";
       m.classList.remove("foto"); m.style.backgroundImage="none"; m.style.backgroundColor=objetivo.c; m.style.borderColor=objetivo.b;
     }
     pausa=0; estado="jugando";
@@ -279,7 +287,7 @@
 
   function empezar(m,nivel){
     if(typeof m==="string") modo=m;
-    if(nivel) nivelFrutas=nivel;
+    if(nivel){ if(modo==="frutas") nivelFrutas=nivel; else nivelColores=nivel; }
     ac();
     $("#inicio").classList.add("hidden"); $("#final").classList.add("hidden"); $("#juego").classList.remove("hidden");
     medir();
@@ -287,7 +295,7 @@
     if(modo==="frutas"){
       // cada fruta dos veces, sin repetir la misma seguida
       do{ orden=mezclar([...FRUTAS,...FRUTAS]); }while(orden.some((f,i)=>i&&f===orden[i-1]));
-    } else orden=mezclar(COLORES.slice());
+    } else orden=nivelColores>1 ? mezclar(COLORES.slice()).slice(0,RONDAS_COLORES_ALTO) : mezclar(COLORES.slice());
     ronda=0;
     pintarProgreso(); nuevaRonda();
   }
@@ -297,12 +305,15 @@
   }
   function terminar(){
     // al completar el nivel 1 de frutas se pasa solo al nivel 2 (dos de cada fruta)
-    if(modo==="frutas"&&nivelFrutas===1){
-      const id=juegoId; estado="pausa"; sonFinal(); lanzarFuegos("#ffd21f");
+    const tope=modo==="frutas"?2:3;
+    if(nivel()<tope){
+      const id=juegoId, sig=nivel()+1; estado="pausa"; sonFinal(); lanzarFuegos("#ffd21f");
       let listos=0; const seguir=()=>{ if(++listos<2) return; (function espera(){ if(id!==juegoId) return;
-        if(cohetes.length||celebra>0) return setTimeout(espera,100); empezar("frutas",2); })(); };
+        if(cohetes.length||celebra>0) return setTimeout(espera,100); empezar(modo,sig); })(); };
       setTimeout(seguir,2800);
-      setTimeout(()=>decir("¡Muy bien! Ahora hay dos frutas de cada una.",()=>setTimeout(seguir,300)),350);
+      const msj=modo==="frutas"?"¡Muy bien! Vamos al nivel dos. Ahora hay dos frutas de cada una."
+        :(sig===2?"¡Muy bien! Vamos al nivel dos.":"¡Muy bien! Vamos al nivel tres.");
+      setTimeout(()=>decir(msj,()=>setTimeout(seguir,300)),350);
       return;
     }
     estado="fin"; sonFinal(); lanzarFuegos("#ffd21f");
@@ -336,11 +347,12 @@
   function acierto(f){
     const id=juegoId;
     // nivel 2: hay dos frutas iguales; con la primera se celebra un poco y se sigue buscando la otra
-    if(modo==="frutas"&&faltan>1){
+    if(faltan>1){
       faltan--; f.comida=true; f.pop=320; sonAcierto(); destino.activo=false; destino.f=null;
       for(let i=0;i<22;i++){ const a=Math.random()*6.283, v=2+Math.random()*4;
         chispas.push({x:f.x,y:f.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,v:1,c:i%3?f.col.c:"#ffd21f"}); }
-      decir(`¡Bien! Busca ${f.col.art==="el"?"el otro":"la otra"}.`);
+      if(modo==="frutas") decir(`¡Bien! Busca ${f.col.art==="el"?"el otro":"la otra"}.`);
+      else decir(faltan>1?"¡Bien! Busca las otras.":"¡Bien! Busca la otra.");
       return;
     }
     f.comida=true; f.pop=320; sonAcierto();   // sin texto: los niños aún no leen; la felicitación es por voz
@@ -363,6 +375,7 @@
     destino.activo=false;
     if(modo==="frutas"&&nivelFrutas===2) decir(`${f.col.art==="el"?"Ese es un":"Esa es una"} ${f.col.n}. Busca ${objetivo.artPl} ${objetivo.pl}.`);
     else if(modo==="frutas") decir(`${f.col.art==="el"?"Ese es el":"Esa es la"} ${f.col.n}. Busca ${objetivo.art} ${objetivo.n}.`);
+    else if(nivelColores>1) decir("Ese es el color "+f.col.n+". Busca todas las de color "+objetivo.n+".");
     else decir("Ese es el color "+f.col.n+". Busca el color "+objetivo.n+".");
   }
 
@@ -401,7 +414,7 @@
     chispas.forEach(p=>{ const fz=p.fuego?0.985:1; p.vx*=fz; p.vy*=fz;
       p.x+=p.vx*dt/16; p.y+=p.vy*dt/16; p.vy+=(p.fuego?0.05:0.12)*dt/16; p.v-=dt/(p.fuego?1300:900); });
     chispas=chispas.filter(p=>p.v>0);
-    if(modo==="frutas") moverFrutas(dt);
+    if(modo==="frutas"||nivelColores>1) moverFrutas(dt);
     if(estado!=="jugando"){ turtle.anim+=dt*0.004; return; }
     // si el niño tocó una fruta, la tortuga la sigue aunque la fruta se mueva
     if(destino.activo&&destino.f){ if(destino.f.comida) destino.f=null; else { destino.x=destino.f.x; destino.y=destino.f.y; } }
@@ -548,17 +561,17 @@
   window.addEventListener("blur",()=>{ for(const k in teclas) teclas[k]=false; });
   window.addEventListener("resize",()=>{ if(!$("#juego").classList.contains("hidden")) medir(); });
 
-  $("#btnJugar").addEventListener("click",()=>empezar("colores"));
+  $("#btnJugar").addEventListener("click",()=>empezar("colores",1));
   $("#btnFrutas").addEventListener("click",()=>empezar("frutas",1));
   $("#btnFrutas2").addEventListener("click",()=>empezar("frutas",2));
-  $("#btnOtra").addEventListener("click",()=>empezar());
+  $("#btnOtra").addEventListener("click",()=>empezar(modo,1));
   $("#btnInicio").addEventListener("click",aInicio);
   $("#btnCasa").addEventListener("click",aInicio);
   $("#btnRepetir").addEventListener("click",()=>{ if(objetivo) decir(frase(objetivo)); });
   $("#btnVoz").addEventListener("click",()=>{ vozOn=!vozOn; try{ localStorage.setItem("tortuguita_colores_voz",vozOn?"1":"0"); }catch(e){}
     actualizarBtnVoz(); if(!vozOn){ try{ speechSynthesis.cancel(); }catch(e){} } else if(objetivo) decir(frase(objetivo)); });
 
-  if(location.hash==="#prueba") window.__tg={frutas:()=>frutas,objetivo:()=>objetivo,estado:()=>estado,ronda:()=>ronda,tortuga:()=>turtle};
+  if(location.hash==="#prueba") window.__tg={tick:(n)=>{ for(let i=0;i<(n||1);i++) actualizar(16.67); },nivel:()=>nivel(),frutas:()=>frutas,objetivo:()=>objetivo,estado:()=>estado,ronda:()=>ronda,tortuga:()=>turtle};
   pintarPuntos("#puntosInicio"); portada(); actualizarBtnVoz();
   requestAnimationFrame(paso);
 })();
