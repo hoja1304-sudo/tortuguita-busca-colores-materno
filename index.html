@@ -276,8 +276,8 @@
   // ---------- Torre: medidas ----------
   function medirTorre(){
     const top=Math.min(104,H*0.15)+6, suelo=H-Math.min(64,H*0.1)-Math.max(18,Math.min(W,H)*0.04);
-    let h=suelo-top, w=h*TORRE.ar;
-    if(w>W*0.6){ w=W*0.6; h=w/TORRE.ar; }
+    // la torre se dibuja más ancha que la imagen original (pedido de Alberto)
+    let h=suelo-top, w=Math.min(W*0.64,h*TORRE.ar*1.75);
     const cx=W/2, t0=suelo-h, b=TORRE.bandas;
     const banda=h*(b[2]-b[1]);
     Object.assign(tor,{cx,top:t0,suelo,w,h,banda,col0:cx-w*0.36,col1:cx+w*0.36});
@@ -302,7 +302,9 @@
   function nuevaRonda(){
     objTam=null;
     if(modo==="torre"){
-      objetivo=orden[ronda]; faltan=1; frutas=[]; armarBotones();
+      objetivo=orden[ronda]; faltan=1; frutas=[];
+      medirTorre(); turtle.x=tor.cx; turtle.y=tor.suelo; turtle.ang=-Math.PI/2; destino.activo=false;   // vuelve abajo de la torre
+      armarBotones();
       const m=$("#muestra");
       $("#txtColor").innerHTML="<small>&nbsp;</small><b>"+objetivo.k+"</b>";
       m.classList.remove("foto"); m.style.backgroundImage="none"; m.style.backgroundColor=BOTON[objetivo.color].c; m.style.borderColor=BOTON[objetivo.color].b;
@@ -371,7 +373,7 @@
       const niveles=mezclar([1,2,3,4,5,6,7,8,9,10]).slice(0,8);
       const colores=mezclar(["verde","verde","verde","verde","rojo","rojo","rojo","rojo"]);   // 4 verdes y 4 rojos
       orden=niveles.map((k,i)=>{ const color=colores[i]; return {k,color,c:BOTON[color].c,b:BOTON[color].b}; });
-      medirTorre(); turtle.x=Math.max(turtle.r*1.4,tor.col0-turtle.r*3); turtle.y=tor.suelo; turtle.ang=0;
+      medirTorre();
     } else orden=nivelColores>1 ? mezclar(COLORES.slice()).slice(0,RONDAS_COLORES_ALTO) : mezclar(COLORES.slice());
     ronda=0;
     pintarProgreso(); nuevaRonda();
@@ -494,14 +496,12 @@
     if(d>1.5){
       const v=Math.min(vmax,Math.max(0.6,d*0.2)); turtle.x+=mx/d*v; turtle.y+=my/d*v;
       turtle.anim+=dt*0.02;
+      // gira hacia donde camina (izquierda, derecha, arriba o abajo), como en los otros juegos
+      const ta=Math.atan2(my,mx); let da=ta-turtle.ang; while(da>Math.PI)da-=6.283185; while(da<-Math.PI)da+=6.283185; turtle.ang+=da*0.2;
     } else { if(destino.activo&&!(kx||ky)) destino.activo=false; turtle.anim+=dt*0.004; }
     turtle.y=cl(turtle.y,tor.top+tor.banda*0.3,tor.suelo);
     if(turtle.y<tor.suelo-1) turtle.x=cl(turtle.x,tor.col0,tor.col1);
     turtle.x=cl(turtle.x,turtle.r*1.2,W-turtle.r*1.2);
-    // en la torre va de cabeza hacia arriba (escalando); en el suelo mira hacia donde camina
-    const escalando=turtle.y<tor.suelo-1||Math.abs(my)>Math.abs(mx);
-    const ta=escalando?-Math.PI/2:(mx>=0?0:Math.PI);
-    if(d>1.5||escalando){ let da=ta-turtle.ang; while(da>Math.PI)da-=6.283185; while(da<-Math.PI)da+=6.283185; turtle.ang+=da*0.2; }
     // contacto con los botones (cabeza o caparazón)
     for(const bt of tor.botones){
       if(bt.pulsado||bt.espera>0) continue;
